@@ -27,9 +27,9 @@ export default function DashboardLayout({
 
     const navigation = [
         { name: "New Prompt", href: "/dashboard", icon: Sparkles },
-        { name: "History", href: "/dashboard/history", icon: History },
-        { name: "Saved Templates", href: "/dashboard/templates", icon: BookmarkPlus },
-        { name: "Settings", href: "/dashboard/settings", icon: Settings },
+        { name: "History", href: "/history", icon: History },
+        { name: "Saved Templates", href: "/templates", icon: BookmarkPlus },
+        { name: "Settings", href: "/settings", icon: Settings },
     ];
 
     const handleSignOut = async () => {
@@ -83,8 +83,8 @@ export default function DashboardLayout({
                                     href={item.href}
                                     onClick={() => setSidebarOpen(false)}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                                            ? "bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/50 shadow-lg shadow-purple-500/20"
-                                            : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                                        ? "bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white border border-purple-500/50 shadow-lg shadow-purple-500/20"
+                                        : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                                         }`}
                                 >
                                     <Icon className="w-5 h-5" />
