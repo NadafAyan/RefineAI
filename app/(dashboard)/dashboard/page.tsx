@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { usePromptWizard } from "@/hooks/usePromptWizard";
@@ -42,23 +42,34 @@ export default function DashboardPage() {
     const {
         currentStep,
         state,
+        isGenerating,
         nextStep,
         prevStep,
         selectCategory,
         updateField,
         getPersonaSuggestions,
         getPlaceholderText,
+        generatePrompt,
+        loadFromParams,
         resetWizard,
     } = usePromptWizard();
 
     const [modelSearchOpen, setModelSearchOpen] = useState(false);
     const [prevStepValue, setPrevStepValue] = useState(1);
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         if (!loading && !user) {
             router.push("/login");
         }
     }, [user, loading, router]);
+
+    // Load from URL parameters for remix functionality
+    useEffect(() => {
+        if (searchParams && searchParams.get('category')) {
+            loadFromParams(searchParams);
+        }
+    }, [searchParams, loadFromParams]);
 
     useEffect(() => {
         setPrevStepValue(currentStep);
