@@ -3,6 +3,7 @@
 
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "demo-api-key",
@@ -13,8 +14,13 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:123456789:web:abcdef",
 };
 
-// Initialize Firebase only if not already initialized
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase Auth
 export const auth = getAuth(app);
+
+// Initialize Firestore
+export const db = getFirestore(app);
 
 export default app;
