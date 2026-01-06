@@ -31,6 +31,7 @@ interface UsePromptWizardReturn {
     getPersonaSuggestions: () => string[];
     getPlaceholderText: () => string;
     generatePrompt: () => Promise<void>;
+    loadFromParams: (params: URLSearchParams) => void;
     resetWizard: () => void;
 }
 
@@ -153,6 +154,35 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         }
     };
 
+    const loadFromParams = (params: URLSearchParams) => {
+        const categoryId = params.get('category');
+        const objective = params.get('objective');
+        const persona = params.get('persona');
+        const modelName = params.get('model');
+        const format = params.get('format');
+        const tone = params.get('tone');
+
+        if (categoryId && objective) {
+            // Import CATEGORIES to find the matching category
+            const { CATEGORIES } = require('@/lib/wizard-data');
+            const category = CATEGORIES.find((c: Category) => c.id === categoryId);
+
+            if (category) {
+                setState((prev) => ({
+                    ...prev,
+                    selectedCategory: category,
+                    objective: objective || '',
+                    persona: persona || '',
+                    targetModel: ALL_MODELS.find(m => m.name === modelName) || ALL_MODELS[0],
+                    format: (format as OutputFormat) || 'Markdown',
+                    tone: tone ? parseInt(tone) : 50,
+                }));
+                // Start at step 2 since category is already selected
+                setCurrentStep(2);
+            }
+        }
+    };
+
     const resetWizard = () => {
         setCurrentStep(1);
         setState(initialState);
@@ -169,6 +199,7 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         getPersonaSuggestions: getCurrentPersonaSuggestions,
         getPlaceholderText: getPlaceholderTextForCategory,
         generatePrompt,
+        loadFromParams,
         resetWizard,
     };
 }
