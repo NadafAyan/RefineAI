@@ -33,8 +33,19 @@ import {
 } from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Copy, Save, Play, Sparkles, Check, ChevronsUpDown } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { ArrowLeft, ArrowRight, Copy, Save, Play, Sparkles, Check, ChevronsUpDown, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useTemplates } from "@/hooks/useTemplates";
+import { usePromptHistory } from "@/hooks/usePromptHistory";
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
@@ -51,11 +62,18 @@ export default function DashboardPage() {
         getPlaceholderText,
         generatePrompt,
         loadFromParams,
+        loadFromTemplate,
         resetWizard,
     } = usePromptWizard();
 
+    const { saveTemplate, fetchTemplateById } = useTemplates();
+    const { savePrompt } = usePromptHistory();
+
     const [modelSearchOpen, setModelSearchOpen] = useState(false);
     const [prevStepValue, setPrevStepValue] = useState(1);
+    const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+    const [templateName, setTemplateName] = useState("");
+    const [templateDescription, setTemplateDescription] = useState("");
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -71,20 +89,110 @@ export default function DashboardPage() {
         }
     }, [searchParams, loadFromParams]);
 
+    // Load from template if templateId is in URL
+    useEffect(() => {
+        const templateId = searchParams?.get('templateId');
+        if (templateId) {
+            fetchTemplateById(templateId)
+                .then((template) => {
+                    if (template) {
+                        loadFromTemplate(template);
+                        toast.success(`Template "${template.name}" loaded!`);
+                    } else {
+                        toast.error("Template not found");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error loading template:", error);
+                    toast.error("Failed to load template");
+                });
+        }
+    }, [searchParams, fetchTemplateById, loadFromTemplate]);
+
     useEffect(() => {
         setPrevStepValue(currentStep);
     }, [currentStep]);
 
+    // Auto-generate and auto-save when reaching step 4
+    useEffect(() => {
+        const autoGenerateAndSave = async () => {
+            if (currentStep === 4 && !state.refinedOutput && state.selectedCategory && state.objective && state.persona) {
+                await handleGeneratePrompt();
+            }
+        };
+        autoGenerateAndSave();
+    }, [currentStep, state.selectedCategory, state.objective, state.persona, state.refinedOutput]);
+
     const handleCopy = async () => {
         await navigator.clipboard.writeText(state.refinedOutput);
+        toast.success("Copied to clipboard!");
     };
 
-    const handleSave = () => {
-        console.log("Saving to history:", state);
+    const handleSaveTemplate = () => {
+        setShowTemplateDialog(true);
+    };
+
+    const handleSaveTemplateConfirm = async () => {
+        if (!templateName.trim()) {
+            toast.error("Template name is required");
+            return;
+        }
+
+        if (!state.selectedCategory) {
+            toast.error("Please complete the wizard first");
+            return;
+        }
+
+        try {
+            await saveTemplate({
+                name: templateName,
+                description: templateDescription,
+                category: state.selectedCategory.id,
+                persona: state.persona,
+                constraints: {
+                    model: state.targetModel?.name || '',
+                    format: state.format,
+                    tone: state.tone,
+                },
+            });
+
+            toast.success(`Template "${templateName}" saved successfully!`);
+            setShowTemplateDialog(false);
+            setTemplateName('');
+            setTemplateDescription('');
+        } catch (error) {
+            console.error("Error saving template:", error);
+            toast.error("Failed to save template");
+        }
+    };
+
+    // Auto-save to history after generating prompt
+    const handleGeneratePrompt = async () => {
+        try {
+            await generatePrompt();
+
+            // Automatically save to history after successful generation
+            if (state.selectedCategory && state.objective && state.refinedOutput) {
+                await savePrompt({
+                    category: state.selectedCategory.id,
+                    objective: state.objective,
+                    persona: state.persona,
+                    targetModel: state.targetModel?.name || '',
+                    format: state.format,
+                    tone: state.tone,
+                    refinedOutput: state.refinedOutput,
+                });
+                toast.success("Prompt saved to history!");
+            }
+        } catch (error) {
+            console.error("Error generating or saving prompt:", error);
+            toast.error("Failed to generate prompt");
+        }
     };
 
     const handleTestRun = () => {
         console.log("Test run:", state);
+        toast.info("Test run started");
     };
 
     const progressPercentage = (currentStep / 4) * 100;
@@ -508,12 +616,12 @@ export default function DashboardPage() {
                                     Copy to Clipboard
                                 </Button>
                                 <Button
-                                    onClick={handleSave}
+                                    onClick={handleSaveTemplate}
                                     variant="outline"
-                                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                                    className="border-purple-500/50 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300"
                                 >
-                                    <Save className="w-4 h-4 mr-2" />
-                                    Save to History
+                                    <Bookmark className="w-4 h-4 mr-2" />
+                                    Save as Template
                                 </Button>
                                 <Button
                                     onClick={handleTestRun}
@@ -556,6 +664,58 @@ export default function DashboardPage() {
                     </Button>
                 )}
             </div>
+
+            {/* Save Template Dialog */}
+            <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+                <DialogContent className="bg-slate-900 border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle className="text-slate-200">Save this Configuration</DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            Save your persona and settings to reuse with different tasks
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="template-name" className="text-slate-300">Template Name *</Label>
+                            <Input
+                                id="template-name"
+                                placeholder="e.g., Python Debugger"
+                                value={templateName}
+                                onChange={(e) => setTemplateName(e.target.value)}
+                                className="mt-1 bg-slate-800 border-slate-700 text-slate-200"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="template-description" className="text-slate-300">Description (Optional)</Label>
+                            <Textarea
+                                id="template-description"
+                                placeholder="Add notes about when to use this template..."
+                                value={templateDescription}
+                                onChange={(e) => setTemplateDescription(e.target.value)}
+                                className="mt-1 bg-slate-800 border-slate-700 text-slate-200 min-h-[80px]"
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowTemplateDialog(false)}
+                            className="border-slate-700 text-slate-300"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveTemplateConfirm}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                        >
+                            Save Template
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
