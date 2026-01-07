@@ -8,6 +8,7 @@ import {
     getPersonaSuggestions,
     getPlaceholder,
     ALL_MODELS,
+    CATEGORIES,
 } from "@/lib/wizard-data";
 
 interface WizardState {
@@ -32,6 +33,7 @@ interface UsePromptWizardReturn {
     getPlaceholderText: () => string;
     generatePrompt: () => Promise<void>;
     loadFromParams: (params: URLSearchParams) => void;
+    loadFromTemplate: (templateData: any) => void;
     resetWizard: () => void;
 }
 
@@ -183,6 +185,29 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         }
     };
 
+    const loadFromTemplate = (templateData: any) => {
+        if (!templateData) return;
+
+        const category = CATEGORIES.find(c => c.id === templateData.category);
+        if (!category) return;
+
+        const model = ALL_MODELS.find(m => m.name === templateData.constraints.model);
+
+        setState((prev) => ({
+            ...prev,
+            selectedCategory: category,
+            persona: templateData.persona || '',
+            targetModel: model || ALL_MODELS[0],
+            format: (templateData.constraints.format as OutputFormat) || 'Markdown',
+            tone: templateData.constraints.tone || 50,
+            objective: '', // IMPORTANT: Leave empty for fresh input
+            refinedOutput: '',
+        }));
+
+        // Auto-navigate to Step 2 (Brain Dump) so user can type new objective
+        setCurrentStep(2);
+    };
+
     const resetWizard = () => {
         setCurrentStep(1);
         setState(initialState);
@@ -200,6 +225,7 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         getPlaceholderText: getPlaceholderTextForCategory,
         generatePrompt,
         loadFromParams,
+        loadFromTemplate,
         resetWizard,
     };
 }
