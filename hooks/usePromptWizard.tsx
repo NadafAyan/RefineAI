@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 import {
     Category,
     Model,
@@ -10,6 +13,7 @@ import {
     ALL_MODELS,
     CATEGORIES,
 } from "@/lib/wizard-data";
+import { toast } from "sonner";
 
 interface WizardState {
     selectedCategory: Category | null;
@@ -33,6 +37,7 @@ interface UsePromptWizardReturn {
     getPlaceholderText: () => string;
     generatePrompt: () => Promise<void>;
     loadFromParams: (params: URLSearchParams) => void;
+    loadFromId: (id: string) => Promise<void>;
     loadFromTemplate: (templateData: any) => void;
     resetWizard: () => void;
 }
@@ -185,6 +190,50 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         }
     };
 
+    const loadFromId = async (id: string) => {
+        if (!id) return;
+
+        const { user } = require('@/context/AuthContext').useAuth();
+        if (!user) {
+            toast.error("Please sign in to load prompts");
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            const docRef = doc(db, "users", user.uid, "prompts", id);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const category = CATEGORIES.find(c => c.id === data.category);
+                const model = ALL_MODELS.find(m => m.name === data.targetModel);
+
+                setState((prev) => ({
+                    ...prev,
+                    selectedCategory: category || null,
+                    objective: data.objective || '',
+                    persona: data.persona || '',
+                    targetModel: model || ALL_MODELS[0],
+                    format: (data.format as OutputFormat) || 'Markdown',
+                    tone: data.tone || 50,
+                    refinedOutput: '', // Clear output so user generates a NEW one
+                }));
+
+                // Auto-navigate to Step 2 (Brain Dump) for editing
+                setCurrentStep(2);
+                toast.success("Prompt loaded! Edit and regenerate.");
+            } else {
+                toast.error("Prompt not found");
+            }
+        } catch (error) {
+            console.error("Error loading prompt:", error);
+            toast.error("Failed to load prompt");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const loadFromTemplate = (templateData: any) => {
         if (!templateData) return;
 
@@ -225,6 +274,7 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         getPlaceholderText: getPlaceholderTextForCategory,
         generatePrompt,
         loadFromParams,
+        loadFromId,
         loadFromTemplate,
         resetWizard,
     };

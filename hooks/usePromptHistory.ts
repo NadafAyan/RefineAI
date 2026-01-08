@@ -10,6 +10,7 @@ import {
     doc,
     addDoc,
     serverTimestamp,
+    limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -33,7 +34,13 @@ export function usePromptHistory(): PromptHistoryHook {
 
         // Reference to user's prompts collection
         const promptsRef = collection(db, "users", user.uid, "prompts");
-        const q = query(promptsRef, orderBy("createdAt", "desc"));
+
+        // Hard cap at 50 prompts to prevent billing spikes
+        const q = query(
+            promptsRef,
+            orderBy("createdAt", "desc"),
+            limit(50)
+        );
 
         // Set up real-time listener
         const unsubscribe = onSnapshot(

@@ -63,6 +63,7 @@ export default function DashboardPage() {
         generatePrompt,
         loadFromParams,
         loadFromTemplate,
+        loadFromId,
         resetWizard,
     } = usePromptWizard();
 
@@ -108,6 +109,14 @@ export default function DashboardPage() {
                 });
         }
     }, [searchParams, fetchTemplateById, loadFromTemplate]);
+
+    // Load from remixId if in URL (ID-based approach)
+    useEffect(() => {
+        const remixId = searchParams?.get('remixId');
+        if (remixId) {
+            loadFromId(remixId);
+        }
+    }, [searchParams, loadFromId]);
 
     useEffect(() => {
         setPrevStepValue(currentStep);

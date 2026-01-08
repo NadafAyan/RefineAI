@@ -73,16 +73,13 @@ export function HistoryCard({ prompt, onDelete }: HistoryCardProps) {
         }
     };
 
+    const handleUseTemplate = () => {
+        router.push(`/dashboard?templateId=${prompt.id}`);
+    };
+
     const handleRemix = () => {
-        const params = new URLSearchParams({
-            category: prompt.category,
-            objective: prompt.objective,
-            persona: prompt.persona,
-            model: prompt.targetModel,
-            format: prompt.format,
-            tone: prompt.tone.toString(),
-        });
-        router.push(`/dashboard?${params.toString()}`);
+        // ID-based approach - more efficient and cleaner URLs
+        router.push(`/dashboard?remixId=${prompt.id}`);
     };
 
     const categoryColor = categoryColors[prompt.category.toLowerCase()] || categoryColors.coding;
