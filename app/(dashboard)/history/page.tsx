@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { usePromptHistory } from "@/hooks/usePromptHistory";
 import { HistoryCard } from "@/components/history-card";
 import { Input } from "@/components/ui/input";
@@ -15,11 +13,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, LibraryBig, Plus, ArrowLeft, Sparkles } from "lucide-react";
+import { Search, LibraryBig, Plus, Sparkles } from "lucide-react";
 import { CATEGORIES } from "@/lib/wizard-data";
 
 export default function HistoryPage() {
-    const router = useRouter();
     const { prompts, loading, error, deletePrompt } = usePromptHistory();
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -73,17 +70,6 @@ export default function HistoryPage() {
                             Browse, search, and reuse your refined prompts. Click <span className="text-purple-400 font-medium">Remix</span> to edit any prompt or <span className="text-blue-400 font-medium">Copy</span> to use it directly.
                         </p>
                     </div>
-
-                    {/* Back to Dashboard Button */}
-                    <Link href="/dashboard">
-                        <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all"
-                        >
-                            <ArrowLeft className="w-5 h-5 mr-2" />
-                            Back to Dashboard
-                        </Button>
-                    </Link>
                 </div>
 
                 {/* Search and Filter Controls with Better Styling */}
@@ -182,15 +168,9 @@ export default function HistoryPage() {
                         )}
                     </p>
 
-                    <Link href="/dashboard">
-                        <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all px-8 py-6 text-lg"
-                        >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Create Your First Prompt
-                        </Button>
-                    </Link>
+                    <p className="text-sm text-slate-500 mt-4">
+                        Use the sidebar to navigate to "New Prompt" to get started
+                    </p>
                 </div>
             )}
 

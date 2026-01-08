@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTemplates } from "@/hooks/useTemplates";
 import { TemplateCard } from "@/components/template-card";
 import { Input } from "@/components/ui/input";
@@ -15,11 +13,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, BookmarkPlus, Plus, ArrowLeft, Sparkles } from "lucide-react";
+import { Search, BookmarkPlus, Sparkles } from "lucide-react";
 import { CATEGORIES } from "@/lib/wizard-data";
 
 export default function TemplatesPage() {
-    const router = useRouter();
+
     const { templates, loading, error, deleteTemplate } = useTemplates();
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -75,16 +73,6 @@ export default function TemplatesPage() {
                         </p>
                     </div>
 
-                    {/* Back to Dashboard Button */}
-                    <Link href="/dashboard">
-                        <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all"
-                        >
-                            <ArrowLeft className="w-5 h-5 mr-2" />
-                            Back to Dashboard
-                        </Button>
-                    </Link>
                 </div>
 
                 {/* Search and Filter Controls */}
@@ -183,15 +171,10 @@ export default function TemplatesPage() {
                         )}
                     </p>
 
-                    <Link href="/dashboard">
-                        <Button
-                            size="lg"
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 transition-all px-8 py-6 text-lg"
-                        >
-                            <Plus className="w-5 h-5 mr-2" />
-                            Create Your First Template
-                        </Button>
-                    </Link>
+
+                    <p className="text-sm text-slate-500 mt-4">
+                        Use the wizard to create prompts, then save them as templates with the "Save as Template" button
+                    </p>
                 </div>
             )}
 
