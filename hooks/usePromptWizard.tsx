@@ -23,6 +23,9 @@ interface WizardState {
     format: OutputFormat;
     tone: number; // 0-100
     refinedOutput: string;
+    hasGenerated: boolean;
+    configChanged: boolean;
+    lastConfig: { targetModel: Model | null; format: OutputFormat; tone: number } | null;
 }
 
 interface UsePromptWizardReturn {
@@ -40,6 +43,8 @@ interface UsePromptWizardReturn {
     loadFromId: (id: string) => Promise<void>;
     loadFromTemplate: (templateData: any) => void;
     resetWizard: () => void;
+    markConfigChanged: () => void;
+    hasConfigChanged: boolean;
 }
 
 const initialState: WizardState = {
@@ -50,6 +55,9 @@ const initialState: WizardState = {
     format: "Markdown",
     tone: 50,
     refinedOutput: "",
+    hasGenerated: false,
+    configChanged: false,
+    lastConfig: null,
 };
 
 export function usePromptWizard(): UsePromptWizardReturn {
@@ -79,7 +87,16 @@ export function usePromptWizard(): UsePromptWizardReturn {
         field: K,
         value: WizardState[K]
     ) => {
-        setState((prev) => ({ ...prev, [field]: value }));
+        setState((prev) => {
+            const newState = { ...prev, [field]: value };
+
+            // Check if Step 4 config changed after first generation
+            if (prev.hasGenerated && (field === 'targetModel' || field === 'format' || field === 'tone')) {
+                newState.configChanged = true;
+            }
+
+            return newState;
+        });
     };
 
     const getCurrentPersonaSuggestions = (): string[] => {
@@ -95,67 +112,52 @@ export function usePromptWizard(): UsePromptWizardReturn {
     const generatePrompt = async () => {
         setIsGenerating(true);
 
-        // Simulate API call delay (replace with actual API call later)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
         try {
-            // TODO: Replace with actual AI API call
-            // Example: const response = await fetch('/api/generate-prompt', { 
-            //   method: 'POST',
-            //   body: JSON.stringify({ category, objective, persona, model, format, tone })
-            // });
+            const response = await fetch('/api/generate-prompt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    category: state.selectedCategory?.label,
+                    objective: state.objective,
+                    persona: state.persona,
+                    targetModel: state.targetModel?.name,
+                    format: state.format,
+                    tone: state.tone,
+                }),
+            });
 
-            const toneDescription =
-                state.tone < 33
-                    ? "casual and friendly"
-                    : state.tone > 66
-                        ? "academic and strict"
-                        : "professional and balanced";
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
 
-            const categoryLabel = state.selectedCategory?.label || "general assistance";
+            const data = await response.json();
 
-            const refinedPrompt = `# Refined ${categoryLabel} Prompt for ${state.targetModel?.name}
+            if (data.success && data.refinedPrompt) {
+                setState((prev) => ({
+                    ...prev,
+                    refinedOutput: data.refinedPrompt,
+                    hasGenerated: true,
+                    configChanged: false,
+                    lastConfig: {
+                        targetModel: state.targetModel,
+                        format: state.format,
+                        tone: state.tone,
+                    },
+                }));
 
-## Role Assignment
-You are acting as: **${state.persona || "an expert assistant"}**
-
-## Primary Objective
-${state.objective || "No objective specified yet."}
-
-## Context & Domain
-This is a **${categoryLabel}** task. Approach this with domain-specific knowledge and best practices.
-
-## Output Requirements
-- **Format**: ${state.format}
-- **Tone**: ${toneDescription}
-- **Target Model**: Optimized for ${state.targetModel?.name || "AI model"}
-
-## Instructions
-1. Carefully analyze the objective in the context of ${categoryLabel}
-2. Provide a comprehensive, ${toneDescription} response
-3. Structure your output according to the **${state.format}** format specification
-4. Maintain consistency with ${state.targetModel?.name}'s capabilities and strengths
-5. Incorporate domain-specific terminology and frameworks relevant to ${categoryLabel}
-
-## Quality Criteria
-- Clear, actionable, and well-structured guidance
-- Appropriate level of technical depth for ${categoryLabel}
-- ${toneDescription.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} communication style
-- Adherence to ${state.format} formatting standards
-
-## Success Metrics
-- Task completion aligns with stated objective
-- Output demonstrates expert-level understanding of ${categoryLabel}
-- Communication style matches the requested ${toneDescription} tone
-
----
-*Generated by RefineAI - Smart Prompt Engineering*
-*Category: ${categoryLabel} | Model: ${state.targetModel?.name} | Format: ${state.format}*`;
-
-            setState((prev) => ({ ...prev, refinedOutput: refinedPrompt }));
-        } catch (error) {
+                if (data.source === 'fallback') {
+                    toast.success("Prompt generated successfully (using template)");
+                } else {
+                    toast.success("Prompt generated successfully!");
+                }
+            } else {
+                throw new Error(data.error || 'Failed to generate prompt');
+            }
+        } catch (error: any) {
             console.error("Error generating prompt:", error);
-            // Handle error appropriately
+            toast.error("Failed to generate prompt. Please try again.");
         } finally {
             setIsGenerating(false);
         }
@@ -277,5 +279,7 @@ This is a **${categoryLabel}** task. Approach this with domain-specific knowledg
         loadFromId,
         loadFromTemplate,
         resetWizard,
+        markConfigChanged: () => setState((prev) => ({ ...prev, configChanged: true })),
+        hasConfigChanged: state.configChanged,
     };
 }
