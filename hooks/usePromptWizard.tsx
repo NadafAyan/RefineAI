@@ -129,7 +129,9 @@ export function usePromptWizard(): UsePromptWizardReturn {
             });
 
             if (!response.ok) {
-                throw new Error(`API request failed with status ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                console.error("Server Error Details:", errorData);
+                throw new Error(errorData.details || errorData.error || `API request failed with status ${response.status}`);
             }
 
             const data = await response.json();
