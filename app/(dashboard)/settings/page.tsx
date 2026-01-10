@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
 import { useSettings } from "@/hooks/useSettings";
 import { updateProfile } from "firebase/auth";
@@ -25,13 +24,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Sun, Moon, Monitor, Download, Trash2, User, Settings as SettingsIcon } from "lucide-react";
+import { Download, Trash2, User, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    const { theme, setTheme } = useTheme();
     const { settings, loading: settingsLoading, updateSettings, exportUserData, deleteAccount } = useSettings();
 
     const [displayName, setDisplayName] = useState("");
@@ -90,7 +88,6 @@ export default function SettingsPage() {
             await updateSettings({
                 defaultModel,
                 defaultTone,
-                theme: theme as 'light' | 'dark' | 'system',
             });
         } catch (error) {
             // Error already handled in hook
@@ -238,37 +235,6 @@ export default function SettingsPage() {
                     </CardHeader>
 
                     <CardContent className="space-y-6">
-                        {/* Theme Toggle */}
-                        <div className="space-y-3">
-                            <Label className="text-slate-300">Theme</Label>
-                            <div className="flex gap-3">
-                                <Button
-                                    variant={theme === 'light' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('light')}
-                                    className={theme === 'light' ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}
-                                >
-                                    <Sun className="w-4 h-4 mr-2" />
-                                    Light
-                                </Button>
-                                <Button
-                                    variant={theme === 'dark' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('dark')}
-                                    className={theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}
-                                >
-                                    <Moon className="w-4 h-4 mr-2" />
-                                    Dark
-                                </Button>
-                                <Button
-                                    variant={theme === 'system' ? 'default' : 'outline'}
-                                    onClick={() => setTheme('system')}
-                                    className={theme === 'system' ? 'bg-purple-600 hover:bg-purple-700' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}
-                                >
-                                    <Monitor className="w-4 h-4 mr-2" />
-                                    System
-                                </Button>
-                            </div>
-                        </div>
-
                         {/* Default Model */}
                         <div className="space-y-3">
                             <Label htmlFor="defaultModel" className="text-slate-300">Default AI Model</Label>
