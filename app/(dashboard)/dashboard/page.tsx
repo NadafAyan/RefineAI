@@ -41,7 +41,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, ArrowRight, Copy, Save, Play, Sparkles, Check, ChevronsUpDown, Bookmark } from "lucide-react";
+import { ArrowLeft, ArrowRight, Copy, Save, Play, Sparkles, Check, ChevronsUpDown, Bookmark, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -65,6 +65,7 @@ export default function DashboardPage() {
         loadFromTemplate,
         loadFromId,
         resetWizard,
+        hasConfigChanged,
     } = usePromptWizard();
 
     const { saveTemplate, fetchTemplateById } = useTemplates();
@@ -75,6 +76,9 @@ export default function DashboardPage() {
     const [showTemplateDialog, setShowTemplateDialog] = useState(false);
     const [templateName, setTemplateName] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [showTestRunDialog, setShowTestRunDialog] = useState(false);
+    const [testRunOutput, setTestRunOutput] = useState("");
+    const [isTestRunning, setIsTestRunning] = useState(false);
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -199,9 +203,66 @@ export default function DashboardPage() {
         }
     };
 
-    const handleTestRun = () => {
-        console.log("Test run:", state);
-        toast.info("Test run started");
+    const handleTestRun = async () => {
+        if (!state.refinedOutput || !state.objective) {
+            toast.error("Please generate a prompt first");
+            return;
+        }
+
+        // Check if it's an image generation request
+        const isImageGen = state.selectedCategory?.id === 'image-generation' ||
+            state.objective.toLowerCase().includes('image') ||
+            state.objective.toLowerCase().includes('picture') ||
+            state.objective.toLowerCase().includes('photo');
+
+        if (isImageGen) {
+            toast.info("Image generation test runs are not supported yet");
+            return;
+        }
+
+        setTestRunOutput("");
+        setShowTestRunDialog(true);
+        setIsTestRunning(true);
+
+        try {
+            const response = await fetch('/api/test-run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: state.refinedOutput,
+                    objective: state.objective,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Test run failed');
+            }
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            if (!reader) {
+                throw new Error('No response stream');
+            }
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                setTestRunOutput((prev) => prev + chunk);
+            }
+
+            toast.success("Test run completed!");
+        } catch (error: any) {
+            console.error("Test run error:", error);
+            toast.error("Test run failed. Please try again.");
+            setTestRunOutput((prev) => prev + "\n\n[Error: Test run failed]");
+        } finally {
+            setIsTestRunning(false);
+        }
     };
 
     const progressPercentage = (currentStep / 4) * 100;
@@ -617,6 +678,18 @@ export default function DashboardPage() {
 
                             {/* Action Buttons */}
                             <div className="flex flex-wrap gap-3">
+                                {/* Regenerate Button - Shows when config changes */}
+                                {hasConfigChanged && (
+                                    <Button
+                                        onClick={handleGeneratePrompt}
+                                        disabled={isGenerating}
+                                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg shadow-green-500/50"
+                                    >
+                                        <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+                                        {isGenerating ? 'Regenerating...' : 'Regenerate Prompt'}
+                                    </Button>
+                                )}
+
                                 <Button
                                     onClick={handleCopy}
                                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/50"
@@ -721,6 +794,78 @@ export default function DashboardPage() {
                             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                         >
                             Save Template
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Test Run Dialog */}
+            <Dialog open={showTestRunDialog} onOpenChange={setShowTestRunDialog}>
+                <DialogContent className="bg-slate-900 border-slate-800 max-w-3xl max-h-[80vh]">
+                    <DialogHeader>
+                        <DialogTitle className="text-slate-200 flex items-center gap-2">
+                            <Play className="w-5 h-5 text-purple-400" />
+                            Test Run Output
+                        </DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                            Real-time AI response using your generated prompt
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        {/* Output Display */}
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                            {isTestRunning && testRunOutput.length === 0 ? (
+                                <div className="flex items-center gap-3 text-slate-400">
+                                    <div className="animate-spin">
+                                        <Sparkles className="w-5 h-5 text-purple-400" />
+                                    </div>
+                                    <span>Generating response...</span>
+                                </div>
+                            ) : (
+                                <pre className="text-slate-300 whitespace-pre-wrap font-mono text-sm leading-relaxed">
+                                    {testRunOutput || 'No output yet...'}
+                                    {isTestRunning && <span className="animate-pulse">▊</span>}
+                                </pre>
+                            )}
+                        </div>
+
+                        {/* Stats */}
+                        <div className="flex items-center justify-between text-sm text-slate-500">
+                            <span>
+                                {testRunOutput.length} characters
+                            </span>
+                            <span>
+                                {isTestRunning ? (
+                                    <span className="text-purple-400 flex items-center gap-2">
+                                        <span className="animate-pulse">●</span>
+                                        Streaming...
+                                    </span>
+                                ) : (
+                                    <span className="text-green-400">✓ Complete</span>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowTestRunDialog(false)}
+                            className="border-slate-700 text-slate-300"
+                        >
+                            Close
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                navigator.clipboard.writeText(testRunOutput);
+                                toast.success("Output copied to clipboard!");
+                            }}
+                            disabled={!testRunOutput}
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                        >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy Output
                         </Button>
                     </DialogFooter>
                 </DialogContent>
