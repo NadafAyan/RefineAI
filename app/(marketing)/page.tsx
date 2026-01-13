@@ -4,10 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { siteConfig } from "@/config/site";
 import { ArrowRight, CheckCircle2, XCircle, Play, Target, History, Sparkles, Sliders } from "lucide-react";
-import Image from "next/image";
 
 // Icon mapping for features
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     Target: Target,
     History: History,
     Sparkles: Sparkles,
