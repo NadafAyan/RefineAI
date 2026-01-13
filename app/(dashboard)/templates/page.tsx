@@ -12,7 +12,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Search, BookmarkPlus, Sparkles } from "lucide-react";
 import { CATEGORIES } from "@/lib/wizard-data";
 
@@ -173,7 +172,7 @@ export default function TemplatesPage() {
 
 
                     <p className="text-sm text-slate-500 mt-4">
-                        Use the wizard to create prompts, then save them as templates with the "Save as Template" button
+                        Use the wizard to create prompts, then save them as templates with the &quot;Save as Template&quot; button
                     </p>
                 </div>
             )}
