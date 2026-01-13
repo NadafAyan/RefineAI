@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
+        await request.json();
         // const { prompt } = body; // Unused
 
         // Create a simulated response stream
