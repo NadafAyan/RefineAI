@@ -14,6 +14,7 @@ import {
     CATEGORIES,
 } from "@/lib/wizard-data";
 import { toast } from "sonner";
+import { generateRefinedPrompt } from "@/actions/generate-prompt";
 
 interface WizardState {
     selectedCategory: Category | null;
@@ -109,57 +110,46 @@ export function usePromptWizard(): UsePromptWizardReturn {
         return getPlaceholder(state.selectedCategory.id);
     };
 
+    // ... (inside component)
+
     const generatePrompt = async () => {
         setIsGenerating(true);
 
         try {
-            const response = await fetch('/api/generate-prompt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    category: state.selectedCategory?.label,
-                    objective: state.objective,
-                    persona: state.persona,
-                    targetModel: state.targetModel?.name,
+            // Call Server Action
+            const result = await generateRefinedPrompt({
+                objective: state.objective,
+                persona: state.persona,
+                category: state.selectedCategory?.label || "General",
+                constraints: {
+                    model: state.targetModel?.name || "Generic LLM",
                     format: state.format,
                     tone: state.tone,
-                }),
+                }
             });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("Server Error Details:", errorData);
-                throw new Error(errorData.details || errorData.error || `API request failed with status ${response.status}`);
+            if (!result.success || !result.refinedOutput) {
+                throw new Error(result.error || "Failed to generate prompt.");
             }
 
-            const data = await response.json();
+            // Update State with AI Result
+            setState((prev) => ({
+                ...prev,
+                refinedOutput: result.refinedOutput,
+                hasGenerated: true,
+                configChanged: false,
+                lastConfig: {
+                    targetModel: state.targetModel,
+                    format: state.format,
+                    tone: state.tone,
+                },
+            }));
 
-            if (data.success && data.refinedPrompt) {
-                setState((prev) => ({
-                    ...prev,
-                    refinedOutput: data.refinedPrompt,
-                    hasGenerated: true,
-                    configChanged: false,
-                    lastConfig: {
-                        targetModel: state.targetModel,
-                        format: state.format,
-                        tone: state.tone,
-                    },
-                }));
+            toast.success("Processed by Llama 3.3 (Groq)!");
 
-                if (data.source === 'fallback') {
-                    toast.success("Prompt generated successfully (using template)");
-                } else {
-                    toast.success("Prompt generated successfully!");
-                }
-            } else {
-                throw new Error(data.error || 'Failed to generate prompt');
-            }
         } catch (error: any) {
             console.error("Error generating prompt:", error);
-            toast.error("Failed to generate prompt. Please try again.");
+            toast.error(error.message || "AI Generation Failed");
         } finally {
             setIsGenerating(false);
         }
