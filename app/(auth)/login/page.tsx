@@ -67,7 +67,7 @@ export default function LoginPage() {
         try {
             await signInWithGoogle();
             // Redirect happens in useEffect after user state updates
-        } catch (error) {
+        } catch {
             setError("Failed to sign in with Google");
         }
     };

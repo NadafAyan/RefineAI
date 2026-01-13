@@ -73,7 +73,7 @@ export default function SignupPage() {
         try {
             await signInWithGoogle();
             router.push("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
         }
     };
