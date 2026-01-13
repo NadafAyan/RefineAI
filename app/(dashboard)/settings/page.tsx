@@ -88,7 +88,7 @@ export default function SettingsPage() {
                 defaultModel,
                 defaultTone,
             });
-        } catch (error) {
+        } catch {
             // Error already handled in hook
         } finally {
             setIsSavingPrefs(false);
@@ -111,7 +111,7 @@ export default function SettingsPage() {
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             toast.success("Data exported successfully!");
-        } catch (error) {
+        } catch {
             // Error already handled in hook
         } finally {
             setIsExporting(false);
@@ -123,7 +123,7 @@ export default function SettingsPage() {
         try {
             await deleteAccount();
             router.push("/login");
-        } catch (error) {
+        } catch {
             setIsDeleting(false);
             setShowDeleteDialog(false);
         }
