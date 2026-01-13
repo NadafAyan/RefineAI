@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -173,7 +173,7 @@ export default function DashboardPage() {
     };
 
     // Auto-save to history after generating prompt
-    const handleGeneratePrompt = async () => {
+    const handleGeneratePrompt = useCallback(async () => {
         try {
             await generatePrompt();
 
@@ -194,7 +194,7 @@ export default function DashboardPage() {
             console.error("Error generating or saving prompt:", error);
             toast.error("Failed to generate prompt");
         }
-    };
+    }, [generatePrompt, state.selectedCategory, state.objective, state.refinedOutput, state.persona, state.targetModel, state.format, state.tone, savePrompt]);
 
     // Auto-generate and auto-save when reaching step 4
     useEffect(() => {
