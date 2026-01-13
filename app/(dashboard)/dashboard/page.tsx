@@ -41,7 +41,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, ArrowRight, Copy, Save, Play, Sparkles, Check, ChevronsUpDown, Bookmark, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Copy, Play, Sparkles, Check, ChevronsUpDown, Bookmark, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -127,14 +127,7 @@ export default function DashboardPage() {
     }, [currentStep]);
 
     // Auto-generate and auto-save when reaching step 4
-    useEffect(() => {
-        const autoGenerateAndSave = async () => {
-            if (currentStep === 4 && !state.refinedOutput && state.selectedCategory && state.objective && state.persona) {
-                await handleGeneratePrompt();
-            }
-        };
-        autoGenerateAndSave();
-    }, [currentStep, state.selectedCategory, state.objective, state.persona, state.refinedOutput]);
+
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(state.refinedOutput);
@@ -203,6 +196,16 @@ export default function DashboardPage() {
         }
     };
 
+    // Auto-generate and auto-save when reaching step 4
+    useEffect(() => {
+        const autoGenerateAndSave = async () => {
+            if (currentStep === 4 && !state.refinedOutput && state.selectedCategory && state.objective && state.persona) {
+                await handleGeneratePrompt();
+            }
+        };
+        autoGenerateAndSave();
+    }, [currentStep, state.selectedCategory, state.objective, state.persona, state.refinedOutput, handleGeneratePrompt]);
+
     const handleTestRun = async () => {
         if (!state.refinedOutput || !state.objective) {
             toast.error("Please generate a prompt first");
@@ -256,7 +259,7 @@ export default function DashboardPage() {
             }
 
             toast.success("Test run completed!");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Test run error:", error);
             toast.error("Test run failed. Please try again.");
             setTestRunOutput((prev) => prev + "\n\n[Error: Test run failed]");
@@ -405,7 +408,7 @@ export default function DashboardPage() {
                                     Step 2: Brain Dump
                                 </CardTitle>
                                 <CardDescription className="text-slate-400 text-base">
-                                    Share your raw thoughts. Don't worry about structure - we'll refine it later.
+                                    Share your raw thoughts. Don&apos;t worry about structure - we&apos;ll refine it later.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-4">
