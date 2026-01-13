@@ -168,7 +168,7 @@ export function TemplateCard({ template, onDelete }: TemplateCardProps) {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="text-slate-200">Delete Template?</AlertDialogTitle>
                         <AlertDialogDescription className="text-slate-400">
-                            This action cannot be undone. This will permanently delete the template "{template.name}".
+                            This action cannot be undone. This will permanently delete the template &quot;{template.name}&quot;.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

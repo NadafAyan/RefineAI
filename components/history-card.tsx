@@ -73,9 +73,7 @@ export function HistoryCard({ prompt, onDelete }: HistoryCardProps) {
         }
     };
 
-    const handleUseTemplate = () => {
-        router.push(`/dashboard?templateId=${prompt.id}`);
-    };
+
 
     const handleRemix = () => {
         // ID-based approach - more efficient and cleaner URLs
