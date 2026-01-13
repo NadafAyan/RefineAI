@@ -27,13 +27,15 @@ export async function POST(request: NextRequest) {
             source: 'smart-template'
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Prompt Generation Error:', error);
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         return NextResponse.json(
             {
                 error: 'Failed to generate prompt',
-                details: error.message,
+                details: errorMessage,
                 success: false
             },
             { status: 500 }

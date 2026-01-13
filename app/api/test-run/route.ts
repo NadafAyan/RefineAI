@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { prompt } = body;
+        // const { prompt } = body; // Unused
 
         // Create a simulated response stream
         const encoder = new TextEncoder();
@@ -42,10 +42,11 @@ You can copy the generated prompt and run it in ChatGPT or Claude manually to ge
             },
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Test Run Error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Test run failed';
         return new Response(
-            `Error: ${error.message || 'Test run failed'}`,
+            `Error: ${errorMessage}`,
             { status: 500 }
         );
     }
