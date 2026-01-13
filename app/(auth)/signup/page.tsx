@@ -73,8 +73,8 @@ export default function SignupPage() {
         try {
             await signInWithGoogle();
             router.push("/dashboard");
-        } catch (error) {
-            setError("Failed to sign in with Google");
+        } catch (err: any) {
+            console.error(err);
         }
     };
 
