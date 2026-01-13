@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import { usePromptHistory } from "@/hooks/usePromptHistory";
 import { HistoryCard } from "@/components/history-card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
     Select,
     SelectContent,
@@ -12,8 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, LibraryBig, Plus, Sparkles } from "lucide-react";
+import { Search, LibraryBig, Sparkles } from "lucide-react";
 import { CATEGORIES } from "@/lib/wizard-data";
 
 export default function HistoryPage() {
@@ -159,17 +157,17 @@ export default function HistoryPage() {
                         {searchQuery || categoryFilter !== "all" ? (
                             <>
                                 Try adjusting your <span className="text-purple-400">search</span> or{" "}
-                                <span className="text-blue-400">filter</span> criteria to find what you're looking for
+                                <span className="text-blue-400">filter</span> criteria to find what you&apos;re looking for
                             </>
                         ) : (
                             <>
-                                Start creating refined prompts with our smart wizard and they'll appear here for easy access and reuse
+                                Start creating refined prompts with our smart wizard and they&apos;ll appear here for easy access and reuse
                             </>
                         )}
                     </p>
 
                     <p className="text-sm text-slate-500 mt-4">
-                        Use the sidebar to navigate to "New Prompt" to get started
+                        Use the sidebar to navigate to &quot;New Prompt&quot; to get started
                     </p>
                 </div>
             )}
