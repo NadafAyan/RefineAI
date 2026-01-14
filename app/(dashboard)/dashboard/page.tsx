@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -48,6 +49,18 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { usePromptHistory } from "@/hooks/usePromptHistory";
 
 export default function DashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-slate-300 text-lg">Loading...</div>
+            </div>
+        }>
+            <DashboardContent />
+        </Suspense>
+    );
+}
+
+function DashboardContent() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const {
@@ -86,6 +99,8 @@ export default function DashboardPage() {
             router.push("/login");
         }
     }, [user, loading, router]);
+
+    // ... rest of the component logic ...
 
     // Load from URL parameters for remix functionality
     useEffect(() => {
