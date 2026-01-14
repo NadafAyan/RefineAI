@@ -47,13 +47,17 @@ export default function LoginPage() {
         try {
             await signInWithEmail(formData.email, formData.password);
             // Redirect happens in useEffect after user state updates
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Login error:", err);
-            if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password" || err.code === "auth/user-not-found") {
+
+            // Type guard or safe access for error code
+            const errorCode = (err as { code?: string })?.code;
+
+            if (errorCode === "auth/invalid-credential" || errorCode === "auth/wrong-password" || errorCode === "auth/user-not-found") {
                 setError("Invalid email or password");
-            } else if (err.code === "auth/invalid-email") {
+            } else if (errorCode === "auth/invalid-email") {
                 setError("Invalid email address");
-            } else if (err.code === "auth/too-many-requests") {
+            } else if (errorCode === "auth/too-many-requests") {
                 setError("Too many attempts. Please try again later");
             } else {
                 setError("Failed to sign in. Please try again.");

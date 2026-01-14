@@ -53,13 +53,17 @@ export default function SignupPage() {
         try {
             await signUpWithEmail(formData.email, formData.password, formData.name);
             router.push("/dashboard");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Signup error:", err);
-            if (err.code === "auth/email-already-in-use") {
+
+            // Type guard or safe access for error code
+            const errorCode = (err as { code?: string })?.code;
+
+            if (errorCode === "auth/email-already-in-use") {
                 setError("This email is already registered");
-            } else if (err.code === "auth/invalid-email") {
+            } else if (errorCode === "auth/invalid-email") {
                 setError("Invalid email address");
-            } else if (err.code === "auth/weak-password") {
+            } else if (errorCode === "auth/weak-password") {
                 setError("Password is too weak");
             } else {
                 setError("Failed to create account. Please try again.");
